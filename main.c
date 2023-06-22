@@ -1,50 +1,51 @@
 #include "monty.h"
 #include <stdio.h>
+#define _GNU_SOURCE
+#include <stdlib.h>
+
+bus_t bus = {NULL, NULL, NULL, 0};
 
 /**
- * main - Main function
- * @argc: Number of arguments being passed
- * @argv: the value of Arguments being passed
- * Return: Default return
- **/
-
+* main - function for monty code interpreter
+* @argc: argument count
+* @argv: argument value
+*
+* Return: 0 on success
+*/
 int main(int argc, char *argv[])
 {
-	char *tokens, *lineptr = NULL;
+	char *content;
+	FILE *file;
+	size_t size = 0;
+	ssize_t read_line = 1;
+	stack_t *stack = NULL;
 	unsigned int counter = 0;
-	stack_t *head = NULL;
-	ssize_t read_file;
-	size_t bufsize;
-	FILE *fl;
 
 	if (argc != 2)
 	{
 		fprintf(stderr, "USAGE: monty file\n");
 		exit(EXIT_FAILURE);
 	}
-
-	fl = fopen(argv[1], "r");
-	if (!fl)
+	file = fopen(argv[1], "r");
+	bus.file = file;
+	if (!file)
 	{
 		fprintf(stderr, "Error: Can't open file %s\n", argv[1]);
 		exit(EXIT_FAILURE);
 	}
-
-	while ((read_file = getline(&lineptr, &bufsize, fl)) != -1)
+	while (read_line > 0)
 	{
-		tokens = strtok(lineptr, LIMITER);
+		content = NULL;
+		read_line = getline(&content, &size, file);
+		bus.content = content;
 		counter++;
-		if (tokens)
-			select_func(&head, tokens, counter);
-
-		else if (!tokens)
-			continue;
-
+		if (read_line > 0)
+		{
+			execute(content, &stack, counter, file);
+		}
+		free(content);
 	}
-	if (lineptr)
-		free(lineptr);
-	free_all(&head);
-	fclose(fl);
-	exit(EXIT_SUCCESS);
+	free_stack(stack);
+	fclose(file);
+return (0);
 }
-
